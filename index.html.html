@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///C:/Users/skswj/Downloads/cu-supervisor-v2.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CU 슈퍼바이저 관리 툴</title>
+<link href="./CU 슈퍼바이저 관리 툴_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --cu-purple: #6B21A8;
+    --cu-purple-light: #9333EA;
+    --cu-purple-dark: #4C1D95;
+    --cu-green: #16A34A;
+    --cu-green-light: #22C55E;
+    --cu-green-dark: #14532D;
+    --bg: #0F0A1E;
+    --surface: #1A1030;
+    --surface2: #231545;
+    --border: rgba(107,33,168,0.3);
+    --text: #F3E8FF;
+    --text-muted: #A78BCA;
+    --complete: #22C55E;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* iOS Safari 안전 영역 */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* 모든 클릭 가능 요소에 cursor:pointer + touch-action 명시 */
+  button, [role="button"], .day-tab, .store-item, .check-box, .store-pin-group {
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, var(--cu-purple-dark) 0%, #1a0a35 50%, var(--cu-green-dark) 100%);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(107,33,168,0.05) 20px, rgba(107,33,168,0.05) 21px);
+    pointer-events: none;
+  }
+  .logo {
+    font-family: 'Black Han Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+  }
+  .logo-badge {
+    background: linear-gradient(135deg, var(--cu-purple), var(--cu-green));
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(107,33,168,0.5);
+  }
+  .header-title { font-size: 0.85rem; color: var(--text-muted); }
+  .header-stats { display: flex; gap: 10px; position: relative; z-index: 1; }
+  .stat-chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .stat-chip span { color: var(--cu-green-light); font-weight: 700; }
+
+  /* MAIN LAYOUT */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .day-tabs {
+    display: flex;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    flex-shrink: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .day-tabs::-webkit-scrollbar { display: none; }
+
+  .day-tab {
+    padding: 10px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    flex: 1;
+    text-align: center;
+    min-width: 36px;
+    /* iOS: button처럼 동작하게 */
+    -webkit-appearance: none;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .day-tab.active { color: var(--cu-green-light); border-bottom-color: var(--cu-green-light); background: rgba(22,163,74,0.1); }
+
+  .sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px;
+  }
+  .sidebar-content::-webkit-scrollbar { width: 3px; }
+  .sidebar-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .day-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    padding: 24px 8px;
+    line-height: 1.8;
+  }
+
+  .store-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: border-color 0.2s;
+    overflow: hidden;
+  }
+  .store-item.selected { border-color: var(--cu-green); box-shadow: 0 0 12px rgba(22,163,74,0.3); }
+  .store-item.completed { border-color: var(--cu-green); background: rgba(22,163,74,0.08); }
+
+  .store-item-header {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* iOS: 전체 영역 탭 가능 */
+    min-height: 44px;
+  }
+  .store-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--cu-purple-light);
+    flex-shrink: 0;
+  }
+  .store-item.completed .store-dot { background: var(--cu-green-light); }
+  .store-name-small { font-size: 0.78rem; font-weight: 700; flex: 1; line-height: 1.3; }
+  .store-check-icon { font-size: 0.9rem; opacity: 0; }
+  .store-item.completed .store-check-icon { opacity: 1; }
+
+  .store-progress-bar { height: 3px; background: rgba(255,255,255,0.05); }
+  .store-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cu-purple-light), var(--cu-green-light));
+    transition: width 0.3s;
+  }
+
+  .store-checklist-panel {
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    min-height: 36px;
+  }
+  .checklist-item:last-child { border-bottom: none; }
+
+  /* check-box: div 대신 button으로 변경 → iOS 터치 확실히 작동 */
+  .check-box {
+    width: 22px; height: 22px;
+    border: 2px solid var(--cu-purple-light);
+    border-radius: 5px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    background: transparent;
+    color: white;
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .check-box.checked { background: var(--cu-green); border-color: var(--cu-green); }
+
+  .checklist-text { font-size: 0.75rem; color: var(--text-muted); flex: 1; }
+  .checklist-text.done { text-decoration: line-through; color: rgba(167,139,202,0.35); }
+
+  .delete-task {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.25);
+    font-size: 0.8rem;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-family: 'Noto Sans KR', sans-serif;
+    min-width: 28px; min-height: 28px;
+  }
+
+  .add-task-row { display: flex; gap: 6px; margin-top: 8px; }
+  .add-task-input {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 8px;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .add-task-input:focus { border-color: var(--cu-green); }
+  .add-task-btn {
+    background: var(--cu-green);
+    border: none; border-radius: 6px;
+    color: white; padding: 8px 10px;
+    font-size: 0.75rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    white-space: nowrap;
+    min-height: 36px;
+    -webkit-appearance: none;
+  }
+
+  /* MAP */
+  .map-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, #1a1040 0%, #0a0515 70%);
+  }
+  .map-svg {
+    width: 100%;
+    height: 100%;
+    /* SVG 터치 이벤트 허용 */
+    touch-action: none;
+  }
+
+  /* SVG 핀 그룹 - pointer-events 명시 */
+  .store-pin-group {
+    pointer-events: all;
+  }
+  .pin-hit-area {
+    /* 투명한 큰 터치 영역 */
+    fill: transparent;
+    pointer-events: all;
+  }
+  .pin-circle { transition: filter 0.2s; }
+  .pin-label {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    fill: #fff;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+  .pin-day-badge {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 7px;
+    font-weight: 900;
+    fill: #fff;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+
+  .route-line {
+    stroke: var(--cu-green-light);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    fill: none;
+    opacity: 0.6;
+    animation: dashMove 2s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes dashMove { to { stroke-dashoffset: -14; } }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    width: 270px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .panel-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    flex-shrink: 0;
+  }
+  .panel-title { font-size: 0.8rem; font-weight: 900; color: var(--cu-green-light); letter-spacing: 1px; }
+  .panel-subtitle { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+  }
+  .panel-body::-webkit-scrollbar { width: 3px; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .add-store-section { margin-bottom: 14px; }
+  .section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .form-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 10px;
+    color: var(--text);
+    font-size: 0.78rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    outline: none;
+    margin-bottom: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .form-input:focus { border-color: var(--cu-green); }
+
+  .day-select-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+  .day-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-muted);
+    padding: 6px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 32px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .day-btn.selected { background: var(--cu-green); border-color: var(--cu-green); color: white; }
+
+  .action-btn {
+    width: 100%;
+    padding: 10px;
+    border: none; border-radius: 8px;
+    font-size: 0.75rem; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 40px;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--cu-purple), var(--cu-green)); color: white; }
+  .btn-danger {
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.3) !important;
+    color: #EF4444;
+    margin-top: 6px;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+
+  .detail-store-name { font-size: 0.9rem; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+  .detail-day-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+  .day-tag {
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: white;
+  }
+  .detail-checklist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .detail-checklist-title { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .progress-text { font-size: 0.7rem; color: var(--cu-green-light); font-weight: 700; }
+
+  .no-selection {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    padding: 24px 8px;
+    line-height: 1.8;
+  }
+  .no-selection .icon { font-size: 2rem; margin-bottom: 8px; }
+
+  /* Map controls */
+  .map-controls {
+    position: absolute;
+    top: 10px; right: 10px;
+    display: flex; flex-direction: column; gap: 6px;
+    z-index: 5;
+  }
+  .map-btn {
+    background: rgba(10,5,21,0.88);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.7rem; font-weight: 700;
+    color: var(--text-muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    white-space: nowrap;
+    min-height: 36px;
+    -webkit-appearance: none;
+    appearance: none;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .map-btn.active-filter { border-color: var(--cu-green); color: var(--cu-green-light); }
+
+  /* Map tooltip - 모바일에선 숨김 */
+  .map-tooltip {
+    position: absolute;
+    background: var(--surface2);
+    border: 1px solid var(--cu-green);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+    white-space: nowrap;
+    color: var(--text);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .map-tooltip.visible { opacity: 1; }
+
+  /* Map legend */
+  .map-legend {
+    position: absolute;
+    bottom: 10px; left: 10px;
+    background: rgba(10,5,21,0.85);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    pointer-events: none;
+    z-index: 5;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .legend-item:last-child { margin-bottom: 0; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  /* 커스텀 confirm 다이얼로그 (iOS confirm 이슈 대응) */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    width: 280px;
+    text-align: center;
+  }
+  .modal-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; }
+  .modal-desc { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 18px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btn {
+    flex: 1; padding: 10px;
+    border-radius: 8px; border: none;
+    font-size: 0.8rem; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 40px;
+    -webkit-appearance: none;
+  }
+  .modal-btn-cancel { background: rgba(255,255,255,0.08); color: var(--text-muted); }
+  .modal-btn-confirm { background: #EF4444; color: white; }
+
+  /* MOBILE 반응형 */
+  @media (max-width: 768px) {
+    html, body { overflow: auto; height: auto; }
+    .main { flex-direction: column; overflow: visible; }
+    .sidebar {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      overflow: visible;
+    }
+    .sidebar-content { max-height: 280px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .map-area { height: 55vw; min-height: 240px; flex: none; }
+    .right-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+    .panel-body { max-height: 380px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .header-stats { display: none; }
+  }
+
+  @keyframes pinPop {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 0.55; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 커스텀 확인 모달 (iOS confirm() 대체) -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">점포 삭제</div>
+    <div class="modal-desc" id="modal-desc">정말 이 점포를 삭제하시겠어요?</div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" id="modal-cancel">취소</button>
+      <button class="modal-btn modal-btn-confirm" id="modal-confirm">삭제</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">CU</div>
+    <div>
+      <div style="font-size:0.95rem;font-weight:900;color:#fff;">강남구 슈퍼바이저</div>
+      <div class="header-title">점포 순회 관리 시스템</div>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-chip">총 <span id="total-stores">17</span>개</div>
+    <div class="stat-chip">완료 <span id="completed-stores">0</span>개</div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="day-tabs" id="day-tabs">
+      <button class="day-tab active" data-day="0">전체</button>
+      <button class="day-tab" data-day="1">월</button>
+      <button class="day-tab" data-day="2">화</button>
+      <button class="day-tab" data-day="3">수</button>
+      <button class="day-tab" data-day="4">목</button>
+      <button class="day-tab" data-day="5">금</button>
+      <button class="day-tab" data-day="6">토</button>
+      <button class="day-tab" data-day="7">일</button>
+    </div>
+    <div class="sidebar-content" id="sidebar-store-list"><div class="store-item selected" id="sidebar-store-1">
+      <div class="store-item-header" data-action="select-store" data-storeid="1">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">강남삼성점</div>
+          <div style="margin-top:2px"><span style="background:#6B21A8;padding:1px 5px;border-radius:3px;font-size:0.6rem;font-weight:700;color:white;margin-right:2px">월</span><span style="background:#7C3AED;padding:1px 5px;border-radius:3px;font-size:0.6rem;font-weight:700;color:white;margin-right:2px">화</span><span style="background:#16A34A;padding:1px 5px;border-radius:3px;font-size:0.6rem;font-weight:700;color:white;margin-right:2px">수</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      <div class="store-checklist-panel"><div style="font-size:0.7rem;color:rgba(167,139,202,0.35);padding:4px 0">오른쪽 패널에서 체크리스트를 추가하세요</div></div>
+    </div><div class="store-item" id="sidebar-store-2">
+      <div class="store-item-header" data-action="select-store" data-storeid="2">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">선정릉점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-3">
+      <div class="store-item-header" data-action="select-store" data-storeid="3">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">역삼경복점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-4">
+      <div class="store-item-header" data-action="select-store" data-storeid="4">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">역삼삼부자점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-5">
+      <div class="store-item-header" data-action="select-store" data-storeid="5">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">선릉제일점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-6">
+      <div class="store-item-header" data-action="select-store" data-storeid="6">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">역삼점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-7">
+      <div class="store-item-header" data-action="select-store" data-storeid="7">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">대치금강점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-8">
+      <div class="store-item-header" data-action="select-store" data-storeid="8">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">역삼드림점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-9">
+      <div class="store-item-header" data-action="select-store" data-storeid="9">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">도곡럭키점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-10">
+      <div class="store-item-header" data-action="select-store" data-storeid="10">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">일원마루공원점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-11">
+      <div class="store-item-header" data-action="select-store" data-storeid="11">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">수서한아름점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-12">
+      <div class="store-item-header" data-action="select-store" data-storeid="12">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">자곡현대점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-13">
+      <div class="store-item-header" data-action="select-store" data-storeid="13">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">강남자곡점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-14">
+      <div class="store-item-header" data-action="select-store" data-storeid="14">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">강남남명학사점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-15">
+      <div class="store-item-header" data-action="select-store" data-storeid="15">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">자곡힐스테이트점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-16">
+      <div class="store-item-header" data-action="select-store" data-storeid="16">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">세곡지웰점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div><div class="store-item" id="sidebar-store-17">
+      <div class="store-item-header" data-action="select-store" data-storeid="17">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">율현중앙점</div>
+          <div style="margin-top:2px"><span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span></div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      
+      
+    </div></div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-area" id="map-area">
+    <svg class="map-svg" id="map-svg" viewBox="0 0 600 500" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <radialgradient id="mapGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#2D1B69" stop-opacity="0.3"></stop>
+          <stop offset="100%" stop-color="#0a0515" stop-opacity="0"></stop>
+        </radialgradient>
+        <filter id="glow">
+          <fegaussianblur stdDeviation="3" result="coloredBlur"></fegaussianblur>
+          <femerge><femergenode in="coloredBlur"></femergenode><femergenode in="SourceGraphic"></femergenode></femerge>
+        </filter>
+        <filter id="shadow">
+          <fedropshadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.5)"></fedropshadow>
+        </filter>
+      </defs>
+
+      <ellipse cx="300" cy="250" rx="260" ry="200" fill="url(#mapGlow)"></ellipse>
+
+      <!-- 강남구 경계 -->
+      <path d="M 120,60 L 165,45 L 210,38 L 260,42 L 310,38 L 355,45 L 400,55 L 440,70 L 470,88 L 490,110 L 505,135 L 510,160 L 508,190 L 500,220 L 488,245 L 475,265 L 460,285 L 445,305 L 428,325 L 410,345 L 395,365 L 378,385 L 358,400 L 335,415 L 310,425 L 285,432 L 258,435 L 232,430 L 205,420 L 180,408 L 158,392 L 140,373 L 125,352 L 112,328 L 100,303 L 92,278 L 88,252 L 88,225 L 91,198 L 96,172 L 102,147 L 108,122 L 115,97 Z" fill="rgba(107,33,168,0.08)" stroke="rgba(107,33,168,0.5)" stroke-width="1.5" stroke-linejoin="round" pointer-events="none"></path>
+
+      <!-- 격자 라인 -->
+      <line x1="200" y1="60" x2="195" y2="420" stroke="rgba(107,33,168,0.1)" stroke-width="0.5" stroke-dasharray="4,6" pointer-events="none"></line>
+      <line x1="300" y1="42" x2="302" y2="435" stroke="rgba(107,33,168,0.1)" stroke-width="0.5" stroke-dasharray="4,6" pointer-events="none"></line>
+      <line x1="400" y1="55" x2="390" y2="408" stroke="rgba(107,33,168,0.1)" stroke-width="0.5" stroke-dasharray="4,6" pointer-events="none"></line>
+      <line x1="95" y1="200" x2="508" y2="195" stroke="rgba(107,33,168,0.1)" stroke-width="0.5" stroke-dasharray="4,6" pointer-events="none"></line>
+      <line x1="92" y1="300" x2="505" y2="290" stroke="rgba(107,33,168,0.1)" stroke-width="0.5" stroke-dasharray="4,6" pointer-events="none"></line>
+
+      <!-- 도로 -->
+      <line x1="130" y1="188" x2="490" y2="185" stroke="rgba(147,51,234,0.25)" stroke-width="2.5" stroke-linecap="round" pointer-events="none"></line>
+      <text x="478" y="181" font-family="Noto Sans KR" font-size="7" fill="rgba(147,51,234,0.5)" pointer-events="none">테헤란로</text>
+      <line x1="212" y1="50" x2="208" y2="430" stroke="rgba(147,51,234,0.25)" stroke-width="2" stroke-linecap="round" pointer-events="none"></line>
+      <text x="216" y="68" font-family="Noto Sans KR" font-size="7" fill="rgba(147,51,234,0.5)" pointer-events="none">강남대로</text>
+      <line x1="310" y1="45" x2="308" y2="380" stroke="rgba(147,51,234,0.15)" stroke-width="1.5" stroke-linecap="round" pointer-events="none"></line>
+
+      <!-- 동 이름 -->
+      <text x="148" y="135" font-family="Noto Sans KR" font-size="9" fill="rgba(167,139,202,0.3)" font-weight="700" pointer-events="none">역삼동</text>
+      <text x="330" y="120" font-family="Noto Sans KR" font-size="9" fill="rgba(167,139,202,0.3)" font-weight="700" pointer-events="none">삼성동</text>
+      <text x="390" y="215" font-family="Noto Sans KR" font-size="9" fill="rgba(167,139,202,0.3)" font-weight="700" pointer-events="none">대치동</text>
+      <text x="145" y="300" font-family="Noto Sans KR" font-size="9" fill="rgba(167,139,202,0.3)" font-weight="700" pointer-events="none">도곡동</text>
+      <text x="315" y="310" font-family="Noto Sans KR" font-size="9" fill="rgba(167,139,202,0.3)" font-weight="700" pointer-events="none">개포동</text>
+      <text x="195" y="388" font-family="Noto Sans KR" font-size="9" fill="rgba(167,139,202,0.3)" font-weight="700" pointer-events="none">일원동</text>
+      <text x="328" y="388" font-family="Noto Sans KR" font-size="9" fill="rgba(167,139,202,0.3)" font-weight="700" pointer-events="none">수서동</text>
+      <text x="415" y="375" font-family="Noto Sans KR" font-size="9" fill="rgba(167,139,202,0.3)" font-weight="700" pointer-events="none">자곡동</text>
+
+      <!-- 나침반 -->
+      <g transform="translate(548, 58)" pointer-events="none">
+        <circle cx="0" cy="0" r="16" fill="rgba(10,5,21,0.6)" stroke="rgba(107,33,168,0.4)" stroke-width="1"></circle>
+        <text x="0" y="-6" font-family="Noto Sans KR" font-size="8" fill="rgba(255,255,255,0.7)" text-anchor="middle">N</text>
+        <line x1="0" y1="-10" x2="0" y2="-3" stroke="rgba(239,68,68,0.8)" stroke-width="1.5"></line>
+        <line x1="0" y1="3" x2="0" y2="10" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"></line>
+      </g>
+
+      <!-- 동선 라인 (동적) -->
+      <g id="route-lines"></g>
+
+      <!-- 점포 핀 (동적) -->
+      <g id="store-pins"><g class="store-pin-group" data-storeid="1" style="animation-delay: 0s;">
+      <circle cx="308" cy="140" r="22" fill="#7C3AED" opacity="0.15" style="animation: glowPulse 2s ease-in-out infinite"></circle>
+      <circle class="pin-circle" cx="308" cy="140" r="14" fill="#7C3AED" opacity="1" stroke="#fff" stroke-width="2.5" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="288" y="120" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="308" y="143">강남삼성</text>
+      <text class="pin-day-badge" x="308" y="120" fill="#6B21A8">월</text>
+      
+    </g><g class="store-pin-group" data-storeid="2" style="animation-delay: 0.03s;">
+      
+      <circle class="pin-circle" cx="273" cy="177" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="253" y="157" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="273" y="180">선정릉</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="3" style="animation-delay: 0.06s;">
+      
+      <circle class="pin-circle" cx="229" cy="215" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="209" y="195" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="229" y="218">역삼경복</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="4" style="animation-delay: 0.09s;">
+      
+      <circle class="pin-circle" cx="243" cy="228" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="223" y="208" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="243" y="231">역삼삼부</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="5" style="animation-delay: 0.12s;">
+      
+      <circle class="pin-circle" cx="276" cy="206" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="256" y="186" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="276" y="209">선릉제일</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="6" style="animation-delay: 0.15s;">
+      
+      <circle class="pin-circle" cx="264" cy="236" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="244" y="216" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="264" y="239">역삼</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="7" style="animation-delay: 0.18s;">
+      
+      <circle class="pin-circle" cx="324" cy="261" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="304" y="241" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="324" y="264">대치금강</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="8" style="animation-delay: 0.21s;">
+      
+      <circle class="pin-circle" cx="234" cy="252" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="214" y="232" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="234" y="255">역삼드림</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="9" style="animation-delay: 0.24s;">
+      
+      <circle class="pin-circle" cx="248" cy="292" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="228" y="272" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="248" y="295">도곡럭키</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="10" style="animation-delay: 0.27s;">
+      
+      <circle class="pin-circle" cx="353" cy="353" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="333" y="333" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="353" y="356">일원마루</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="11" style="animation-delay: 0.3s;">
+      
+      <circle class="pin-circle" cx="410" cy="378" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="390" y="358" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="410" y="381">수서한아</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="12" style="animation-delay: 0.33s;">
+      
+      <circle class="pin-circle" cx="437" cy="392" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="417" y="372" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="437" y="395">자곡현대</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="13" style="animation-delay: 0.36s;">
+      
+      <circle class="pin-circle" cx="421" cy="400" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="401" y="380" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="421" y="403">강남자곡</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="14" style="animation-delay: 0.39s;">
+      
+      <circle class="pin-circle" cx="385" cy="332" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="365" y="312" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="385" y="335">강남남명</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="15" style="animation-delay: 0.42s;">
+      
+      <circle class="pin-circle" cx="450" cy="410" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="430" y="390" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="450" y="413">자곡힐스</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="16" style="animation-delay: 0.45s;">
+      
+      <circle class="pin-circle" cx="473" cy="422" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="453" y="402" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="473" y="425">세곡지웰</text>
+      
+      
+    </g><g class="store-pin-group" data-storeid="17" style="animation-delay: 0.48s;">
+      
+      <circle class="pin-circle" cx="412" cy="429" r="14" fill="#7C3AED" opacity="0.88" stroke="rgba(0,0,0,0.25)" stroke-width="1" filter="url(#shadow)"></circle>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="392" y="409" width="40" height="40" rx="8"></rect>
+      <text class="pin-label" x="412" y="432">율현중앙</text>
+      
+      
+    </g></g>
+    </svg>
+
+    <div class="map-tooltip" id="map-tooltip" style="left: 670px; top: 231px;"><strong>CU강남삼성점</strong><br>진행률: 0% | 동선 미포함</div>
+
+    <div class="map-controls">
+      <button class="map-btn" id="btn-reset-route">🔄 동선 초기화</button>
+      <button class="map-btn" id="btn-day-filter">📅 오늘만 보기</button>
+    </div>
+
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#9333EA"></div> 미완료</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#22C55E"></div> 완료</div>
+      <div class="legend-item"><div style="width:18px;height:0;border-top:2px dashed #22C55E;opacity:0.7"></div> 방문 동선</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="panel-header">
+      <div class="panel-title">⚙ 점포 관리</div>
+      <div class="panel-subtitle" id="panel-subtitle">CU강남삼성점</div>
+    </div>
+    <div class="panel-body" id="right-panel-body">
+      <!-- 점포 추가 -->
+      <div class="add-store-section">
+        <div class="section-label">➕ 점포 추가</div>
+        <input type="text" class="form-input" id="new-store-name" placeholder="점포 이름 (예: CU역삼점)" autocomplete="off">
+        <div class="section-label" style="margin-top:6px">방문 요일</div>
+        <div class="day-select-row" id="new-store-days">
+          <button class="day-btn" data-day="1">월</button>
+          <button class="day-btn" data-day="2">화</button>
+          <button class="day-btn" data-day="3">수</button>
+          <button class="day-btn" data-day="4">목</button>
+          <button class="day-btn" data-day="5">금</button>
+          <button class="day-btn" data-day="6">토</button>
+          <button class="day-btn" data-day="7">일</button>
+        </div>
+        <button class="action-btn btn-primary" id="btn-add-store">점포 추가하기</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div id="selected-store-panel">
+    <div>
+      <div class="detail-store-name">CU강남삼성점</div>
+      <div class="detail-day-tags"><span class="day-tag" style="background:#6B21A8">월</span><span class="day-tag" style="background:#7C3AED">화</span><span class="day-tag" style="background:#16A34A">수</span></div>
+      <div class="section-label">방문 요일 수정</div>
+      <div class="day-select-row" style="margin-bottom:10px"><button class="day-btn selected" type="button" data-action="toggle-day" data-storeid="1" data-day="1">월</button><button class="day-btn selected" type="button" data-action="toggle-day" data-storeid="1" data-day="2">화</button><button class="day-btn selected" type="button" data-action="toggle-day" data-storeid="1" data-day="3">수</button><button class="day-btn" type="button" data-action="toggle-day" data-storeid="1" data-day="4">목</button><button class="day-btn" type="button" data-action="toggle-day" data-storeid="1" data-day="5">금</button><button class="day-btn" type="button" data-action="toggle-day" data-storeid="1" data-day="6">토</button><button class="day-btn" type="button" data-action="toggle-day" data-storeid="1" data-day="7">일</button></div>
+      <div class="divider"></div>
+      <div class="detail-checklist-header">
+        <div class="detail-checklist-title">✅ 체크리스트</div>
+        <div class="progress-text">0% 완료</div>
+      </div>
+      
+      <div class="add-task-row">
+        <input type="text" class="add-task-input" id="task-input-1" placeholder="할 일 추가..." autocomplete="off" data-storeid="1">
+        <button class="add-task-btn" type="button" data-action="add-task" data-storeid="1">추가</button>
+      </div>
+      <div class="divider"></div>
+      <button class="action-btn btn-danger" type="button" data-action="delete-store" data-storeid="1">🗑 점포 삭제</button>
+    </div>
+  </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================
+// 상수 & 데이터
+// ========================
+const DAY_NAMES = ['', '월', '화', '수', '목', '금', '토', '일'];
+const DAY_COLORS = ['#6B21A8','#7C3AED','#16A34A','#0D9488','#2563EB','#DB2777','#EA580C'];
+
+function latLngToSvg(lat, lng) {
+  const minLat = 37.464, maxLat = 37.532;
+  const minLng = 127.008, maxLng = 127.104;
+  const x = 100 + (lng - minLng) / (maxLng - minLng) * 405;
+  const y = 432 - (lat - minLat) / (maxLat - minLat) * 377;
+  return { x: Math.round(x), y: Math.round(y) };
+}
+
+const DEFAULT_STORES = [
+  { id:1,  name:'CU강남삼성점',       lat:37.5167, lng:127.0572 },
+  { id:2,  name:'CU선정릉점',         lat:37.5100, lng:127.0490 },
+  { id:3,  name:'CU역삼경복점',       lat:37.5031, lng:127.0385 },
+  { id:4,  name:'CU역삼삼부자점',     lat:37.5008, lng:127.0420 },
+  { id:5,  name:'CU선릉제일점',       lat:37.5048, lng:127.0498 },
+  { id:6,  name:'CU역삼점',           lat:37.4993, lng:127.0468 },
+  { id:7,  name:'CU대치금강점',       lat:37.4948, lng:127.0612 },
+  { id:8,  name:'CU역삼드림점',       lat:37.4965, lng:127.0398 },
+  { id:9,  name:'CU도곡럭키점',       lat:37.4892, lng:127.0430 },
+  { id:10, name:'CU일원마루공원점',   lat:37.4782, lng:127.0680 },
+  { id:11, name:'CU수서한아름점',     lat:37.4738, lng:127.0815 },
+  { id:12, name:'CU자곡현대점',       lat:37.4712, lng:127.0878 },
+  { id:13, name:'CU강남자곡점',       lat:37.4698, lng:127.0842 },
+  { id:14, name:'CU강남남명학사점',   lat:37.4820, lng:127.0755 },
+  { id:15, name:'CU자곡힐스테이트점', lat:37.4680, lng:127.0910 },
+  { id:16, name:'CU세곡지웰점',       lat:37.4658, lng:127.0965 },
+  { id:17, name:'CU율현중앙점',       lat:37.4645, lng:127.0820 },
+];
+
+let stores = [];
+let selectedStoreId = null;
+let currentDay = 0;
+let visitRoute = [];
+let newStoreDays = [];
+let nextId = 100;
+let showDayOnly = false;
+
+// ========================
+// 저장/불러오기
+// ========================
+function saveData() {
+  try {
+    localStorage.setItem('cu_sv_stores', JSON.stringify(stores));
+    localStorage.setItem('cu_sv_route', JSON.stringify(visitRoute));
+  } catch(e) {}
+}
+function loadData() {
+  try {
+    const s = localStorage.getItem('cu_sv_stores');
+    const r = localStorage.getItem('cu_sv_route');
+    if (s) {
+      stores = JSON.parse(s);
+      const ids = stores.map(x => x.id).filter(Boolean);
+      nextId = ids.length ? Math.max(...ids) + 1 : 100;
+    } else {
+      stores = DEFAULT_STORES.map(s => ({ ...s, days: [], tasks: [] }));
+    }
+    if (r) visitRoute = JSON.parse(r);
+  } catch(e) {
+    stores = DEFAULT_STORES.map(s => ({ ...s, days: [], tasks: [] }));
+  }
+}
+
+// ========================
+// 커스텀 모달 (iOS confirm 대체)
+// ========================
+function showConfirm(title, desc, onConfirm) {
+  const overlay = document.getElementById('confirm-modal');
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-desc').textContent = desc;
+  overlay.classList.add('show');
+
+  const cancelBtn = document.getElementById('modal-cancel');
+  const confirmBtn = document.getElementById('modal-confirm');
+
+  function cleanup() {
+    overlay.classList.remove('show');
+    cancelBtn.removeEventListener('click', onCancel);
+    confirmBtn.removeEventListener('click', onOk);
+  }
+  function onCancel() { cleanup(); }
+  function onOk() { cleanup(); onConfirm(); }
+
+  cancelBtn.addEventListener('click', onCancel);
+  confirmBtn.addEventListener('click', onOk);
+}
+
+// ========================
+// 유틸
+// ========================
+function isCompleted(store) {
+  return store.tasks && store.tasks.length > 0 && store.tasks.every(t => t.done);
+}
+function getProgress(store) {
+  if (!store.tasks || store.tasks.length === 0) return 0;
+  return Math.round(store.tasks.filter(t => t.done).length / store.tasks.length * 100);
+}
+
+// ========================
+// 이벤트 등록 헬퍼 (iOS 대응: click + touchend 둘 다)
+// ========================
+function onTap(el, fn) {
+  if (!el) return;
+  let touchMoved = false;
+  el.addEventListener('touchstart', () => { touchMoved = false; }, { passive: true });
+  el.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (!touchMoved) { e.preventDefault(); fn(e); }
+  });
+  el.addEventListener('click', fn);
+}
+
+// ========================
+// 렌더링
+// ========================
+function renderAll() {
+  renderStats();
+  renderSidebar();
+  renderMap();
+  renderRightPanel();
+}
+
+function renderStats() {
+  document.getElementById('total-stores').textContent = stores.length;
+  document.getElementById('completed-stores').textContent = stores.filter(s => isCompleted(s)).length;
+}
+
+// SIDEBAR
+function renderSidebar() {
+  const list = document.getElementById('sidebar-store-list');
+  const filtered = currentDay === 0 ? stores : stores.filter(s => s.days.includes(currentDay));
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="day-empty">이 요일에 배정된 점포가 없어요<br><small style="color:rgba(167,139,202,0.35)">오른쪽 패널에서 요일을 배정하세요</small></div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  filtered.forEach(store => {
+    const comp = isCompleted(store);
+    const isSelected = store.id === selectedStoreId;
+    const prog = getProgress(store);
+
+    const item = document.createElement('div');
+    item.className = `store-item${comp ? ' completed' : ''}${isSelected ? ' selected' : ''}`;
+    item.id = `sidebar-store-${store.id}`;
+
+    const dayBadges = store.days.map(d =>
+      `<span style="background:${DAY_COLORS[(d-1)%7]};padding:1px 5px;border-radius:3px;font-size:0.6rem;font-weight:700;color:white;margin-right:2px">${DAY_NAMES[d]}</span>`
+    ).join('');
+
+    let checklistHTML = '';
+    if (isSelected && store.tasks && store.tasks.length > 0) {
+      const items = store.tasks.map(task => `
+        <div class="checklist-item" data-taskid="${task.id}">
+          <button class="check-box${task.done ? ' checked' : ''}" data-action="toggle-task" data-storeid="${store.id}" data-taskid="${task.id}" type="button">
+            ${task.done ? '✓' : ''}
+          </button>
+          <div class="checklist-text${task.done ? ' done' : ''}">${task.text}</div>
+        </div>
+      `).join('');
+      checklistHTML = `<div class="store-checklist-panel">${items}</div>`;
+    } else if (isSelected) {
+      checklistHTML = `<div class="store-checklist-panel"><div style="font-size:0.7rem;color:rgba(167,139,202,0.35);padding:4px 0">오른쪽 패널에서 체크리스트를 추가하세요</div></div>`;
+    }
+
+    item.innerHTML = `
+      <div class="store-item-header" data-action="select-store" data-storeid="${store.id}">
+        <div class="store-dot"></div>
+        <div style="flex:1">
+          <div class="store-name-small">${store.name.replace('CU','')}</div>
+          <div style="margin-top:2px">${dayBadges || '<span style="font-size:0.6rem;color:rgba(167,139,202,0.35)">요일 미배정</span>'}</div>
+        </div>
+        <div class="store-check-icon">✅</div>
+      </div>
+      ${store.tasks && store.tasks.length > 0 ? `<div class="store-progress-bar"><div class="store-progress-fill" style="width:${prog}%"></div></div>` : ''}
+      ${checklistHTML}
+    `;
+    list.appendChild(item);
+  });
+
+  // 이벤트 위임으로 등록 (iOS 안정적)
+  list.querySelectorAll('[data-action="select-store"]').forEach(el => {
+    onTap(el, () => selectStore(parseInt(el.dataset.storeid)));
+  });
+  list.querySelectorAll('[data-action="toggle-task"]').forEach(btn => {
+    onTap(btn, (e) => {
+      e.stopPropagation();
+      toggleTask(parseInt(btn.dataset.storeid), btn.dataset.taskid);
+    });
+  });
+}
+
+// MAP
+function renderMap() {
+  renderRouteLines();
+  renderStorePins();
+}
+
+function renderStorePins() {
+  const pinsGroup = document.getElementById('store-pins');
+  const visibleStores = (showDayOnly && currentDay > 0)
+    ? stores.filter(s => s.days.includes(currentDay))
+    : stores;
+
+  // 기존 핀 제거
+  pinsGroup.innerHTML = '';
+
+  visibleStores.forEach((store, i) => {
+    const pos = latLngToSvg(store.lat, store.lng);
+    const comp = isCompleted(store);
+    const isSelected = store.id === selectedStoreId;
+    const color = comp ? '#22C55E' : '#7C3AED';
+    const routeIdx = visitRoute.indexOf(store.id);
+    const shortName = store.name.replace('CU','').replace('점','').substring(0,4);
+    const dayBadge = store.days.length > 0
+      ? `<text class="pin-day-badge" x="${pos.x}" y="${pos.y - 20}" fill="${DAY_COLORS[(store.days[0]-1)%7]}">${DAY_NAMES[store.days[0]]}</text>`
+      : '';
+
+    // SVG 그룹 생성
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'store-pin-group');
+    g.setAttribute('data-storeid', store.id);
+    g.style.animationDelay = `${i * 0.03}s`;
+
+    g.innerHTML = `
+      ${isSelected ? `<circle cx="${pos.x}" cy="${pos.y}" r="22" fill="${color}" opacity="0.15" style="animation: glowPulse 2s ease-in-out infinite"/>` : ''}
+      <circle class="pin-circle" cx="${pos.x}" cy="${pos.y}" r="14"
+        fill="${color}" opacity="${isSelected ? 1 : 0.88}"
+        stroke="${isSelected ? '#fff' : 'rgba(0,0,0,0.25)'}"
+        stroke-width="${isSelected ? 2.5 : 1}"
+        filter="url(#shadow)"/>
+      <!-- 투명 히트 영역 (터치 면적 확대) -->
+      <rect class="pin-hit-area" x="${pos.x-20}" y="${pos.y-20}" width="40" height="40" rx="8"/>
+      <text class="pin-label" x="${pos.x}" y="${pos.y + 3}">${shortName}</text>
+      ${dayBadge}
+      ${routeIdx >= 0 ? `
+        <circle cx="${pos.x+11}" cy="${pos.y-11}" r="7" fill="#22C55E" stroke="#fff" stroke-width="1.5"/>
+        <text x="${pos.x+11}" y="${pos.y-8}" font-family="Noto Sans KR" font-size="7" font-weight="900" fill="white" text-anchor="middle" pointer-events="none">${routeIdx+1}</text>
+      ` : ''}
+    `;
+
+    pinsGroup.appendChild(g);
+
+    // iOS 안정적인 탭 이벤트
+    onTap(g, (e) => {
+      e.stopPropagation();
+      pinTap(store.id);
+    });
+
+    // 마우스 호버 (데스크톱만)
+    g.addEventListener('mouseenter', (e) => showTooltip(e, store.id));
+    g.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+function renderRouteLines() {
+  const linesGroup = document.getElementById('route-lines');
+  if (visitRoute.length < 2) { linesGroup.innerHTML = ''; return; }
+  let pathD = '';
+  visitRoute.forEach((storeId, i) => {
+    const store = stores.find(s => s.id === storeId);
+    if (!store) return;
+    const pos = latLngToSvg(store.lat, store.lng);
+    pathD += i === 0 ? `M ${pos.x} ${pos.y}` : ` L ${pos.x} ${pos.y}`;
+  });
+  linesGroup.innerHTML = `<path class="route-line" d="${pathD}"/>`;
+}
+
+// ========================
+// 인터랙션
+// ========================
+function selectStore(storeId) {
+  selectedStoreId = storeId;
+  renderSidebar();
+  renderMap();
+  renderRightPanel();
+  // 모바일: 사이드바 해당 아이템으로 스크롤
+  const el = document.getElementById(`sidebar-store-${storeId}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function pinTap(storeId) {
+  // 동선 토글
+  const idx = visitRoute.indexOf(storeId);
+  if (idx >= 0) visitRoute.splice(idx, 1);
+  else visitRoute.push(storeId);
+  selectStore(storeId);
+  saveData();
+}
+
+function showTooltip(e, storeId) {
+  const store = stores.find(s => s.id === storeId);
+  if (!store) return;
+  const tooltip = document.getElementById('map-tooltip');
+  const routeIdx = visitRoute.indexOf(storeId);
+  tooltip.innerHTML = `<strong>${store.name}</strong><br>진행률: ${getProgress(store)}% | ${routeIdx >= 0 ? `동선 ${routeIdx+1}번째` : '동선 미포함'}`;
+  tooltip.classList.add('visible');
+  const rect = document.getElementById('map-area').getBoundingClientRect();
+  tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+  tooltip.style.top = (e.clientY - rect.top - 40) + 'px';
+}
+function hideTooltip() { document.getElementById('map-tooltip').classList.remove('visible'); }
+
+function toggleTask(storeId, taskId) {
+  const store = stores.find(s => s.id === storeId);
+  if (!store) return;
+  const task = store.tasks.find(t => t.id === taskId);
+  if (task) task.done = !task.done;
+  saveData();
+  renderAll();
+}
+
+function addTask(storeId) {
+  const input = document.getElementById(`task-input-${storeId}`);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  const store = stores.find(s => s.id === storeId);
+  if (!store) return;
+  if (!store.tasks) store.tasks = [];
+  store.tasks.push({ id: Date.now().toString(), text, done: false });
+  input.value = '';
+  saveData();
+  renderAll();
+  // 포커스 유지
+  setTimeout(() => { const i = document.getElementById(`task-input-${storeId}`); if(i) i.focus(); }, 100);
+}
+
+function deleteTask(storeId, taskId) {
+  const store = stores.find(s => s.id === storeId);
+  if (!store) return;
+  store.tasks = store.tasks.filter(t => t.id !== taskId);
+  saveData();
+  renderAll();
+}
+
+function toggleStoreDay(storeId, day) {
+  const store = stores.find(s => s.id === storeId);
+  if (!store) return;
+  const idx = store.days.indexOf(day);
+  if (idx >= 0) store.days.splice(idx, 1);
+  else store.days.push(day);
+  store.days.sort();
+  saveData();
+  renderAll();
+}
+
+function deleteStore(storeId) {
+  showConfirm('점포 삭제', '정말 이 점포를 삭제하시겠어요?', () => {
+    stores = stores.filter(s => s.id !== storeId);
+    visitRoute = visitRoute.filter(id => id !== storeId);
+    selectedStoreId = null;
+    saveData();
+    renderAll();
+  });
+}
+
+function addStore() {
+  const nameInput = document.getElementById('new-store-name');
+  const name = nameInput.value.trim();
+  if (!name) { showConfirm('알림', '점포 이름을 입력해주세요!', () => {}); return; }
+  const centerLat = 37.495, centerLng = 127.060;
+  stores.push({
+    id: nextId++,
+    name,
+    lat: centerLat + (Math.random() - 0.5) * 0.04,
+    lng: centerLng + (Math.random() - 0.5) * 0.06,
+    days: [...newStoreDays],
+    tasks: []
+  });
+  nameInput.value = '';
+  newStoreDays = [];
+  document.querySelectorAll('#new-store-days .day-btn').forEach(b => b.classList.remove('selected'));
+  saveData();
+  selectStore(stores[stores.length - 1].id);
+}
+
+// ========================
+// RIGHT PANEL
+// ========================
+function renderRightPanel() {
+  const panel = document.getElementById('selected-store-panel');
+
+  if (!selectedStoreId) {
+    panel.innerHTML = `<div class="no-selection"><div class="icon">🗺️</div>지도에서 점포를 탭하거나<br>왼쪽 목록에서 선택하세요<br><br><small style="color:rgba(167,139,202,0.3);font-size:0.65rem">📍 핀을 탭하면 방문 동선에 추가됩니다</small></div>`;
+    document.getElementById('panel-subtitle').textContent = '점포를 선택하거나 새로 추가하세요';
+    return;
+  }
+
+  const store = stores.find(s => s.id === selectedStoreId);
+  if (!store) return;
+
+  document.getElementById('panel-subtitle').textContent = store.name;
+  const prog = getProgress(store);
+
+  const dayBadges = store.days.map(d =>
+    `<span class="day-tag" style="background:${DAY_COLORS[(d-1)%7]}">${DAY_NAMES[d]}</span>`
+  ).join('') || '<span style="font-size:0.7rem;color:rgba(167,139,202,0.4)">요일 미배정</span>';
+
+  const taskList = (store.tasks || []).map(task => `
+    <div class="checklist-item">
+      <button class="check-box${task.done ? ' checked' : ''}" type="button"
+        data-action="toggle-task" data-storeid="${store.id}" data-taskid="${task.id}">
+        ${task.done ? '✓' : ''}
+      </button>
+      <div class="checklist-text${task.done ? ' done' : ''}">${task.text}</div>
+      <button class="delete-task" type="button"
+        data-action="delete-task" data-storeid="${store.id}" data-taskid="${task.id}">✕</button>
+    </div>
+  `).join('');
+
+  const dayBtns = [1,2,3,4,5,6,7].map(d =>
+    `<button class="day-btn${store.days.includes(d) ? ' selected' : ''}" type="button"
+      data-action="toggle-day" data-storeid="${store.id}" data-day="${d}">${DAY_NAMES[d]}</button>`
+  ).join('');
+
+  panel.innerHTML = `
+    <div>
+      <div class="detail-store-name">${store.name}</div>
+      <div class="detail-day-tags">${dayBadges}</div>
+      <div class="section-label">방문 요일 수정</div>
+      <div class="day-select-row" style="margin-bottom:10px">${dayBtns}</div>
+      <div class="divider"></div>
+      <div class="detail-checklist-header">
+        <div class="detail-checklist-title">✅ 체크리스트</div>
+        <div class="progress-text">${prog}% 완료</div>
+      </div>
+      ${taskList}
+      <div class="add-task-row">
+        <input type="text" class="add-task-input" id="task-input-${store.id}"
+          placeholder="할 일 추가..." autocomplete="off"
+          data-storeid="${store.id}"/>
+        <button class="add-task-btn" type="button"
+          data-action="add-task" data-storeid="${store.id}">추가</button>
+      </div>
+      <div class="divider"></div>
+      <button class="action-btn btn-danger" type="button"
+        data-action="delete-store" data-storeid="${store.id}">🗑 점포 삭제</button>
+    </div>
+  `;
+
+  // 이벤트 등록 (위임 방식)
+  panel.querySelectorAll('[data-action]').forEach(el => {
+    const action = el.dataset.action;
+    const storeId = parseInt(el.dataset.storeid);
+    const taskId = el.dataset.taskid;
+    const day = parseInt(el.dataset.day);
+
+    if (action === 'toggle-task') {
+      onTap(el, (e) => { e.stopPropagation(); toggleTask(storeId, taskId); });
+    } else if (action === 'delete-task') {
+      onTap(el, (e) => { e.stopPropagation(); deleteTask(storeId, taskId); });
+    } else if (action === 'toggle-day') {
+      onTap(el, (e) => { e.stopPropagation(); toggleStoreDay(storeId, day); });
+    } else if (action === 'add-task') {
+      onTap(el, (e) => { e.stopPropagation(); addTask(storeId); });
+    } else if (action === 'delete-store') {
+      onTap(el, () => deleteStore(storeId));
+    }
+  });
+
+  // Enter 키 지원
+  const taskInput = document.getElementById(`task-input-${store.id}`);
+  if (taskInput) {
+    taskInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addTask(store.id); }
+    });
+  }
+}
+
+// ========================
+// 정적 버튼 이벤트 (초기 1회 등록)
+// ========================
+function initStaticEvents() {
+  // 요일 탭
+  document.querySelectorAll('.day-tab').forEach(tab => {
+    onTap(tab, () => {
+      currentDay = parseInt(tab.dataset.day);
+      document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderSidebar();
+    });
+  });
+
+  // 점포 추가 요일 버튼
+  document.querySelectorAll('#new-store-days .day-btn').forEach(btn => {
+    onTap(btn, () => {
+      const d = parseInt(btn.dataset.day);
+      const idx = newStoreDays.indexOf(d);
+      if (idx >= 0) newStoreDays.splice(idx, 1);
+      else newStoreDays.push(d);
+      document.querySelectorAll('#new-store-days .day-btn').forEach(b => {
+        b.classList.toggle('selected', newStoreDays.includes(parseInt(b.dataset.day)));
+      });
+    });
+  });
+
+  // 점포 추가 버튼
+  onTap(document.getElementById('btn-add-store'), addStore);
+
+  // Enter 키로 점포 추가
+  document.getElementById('new-store-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addStore(); }
+  });
+
+  // 동선 초기화
+  onTap(document.getElementById('btn-reset-route'), () => {
+    visitRoute = [];
+    saveData();
+    renderMap();
+  });
+
+  // 오늘만 보기
+  const dayFilterBtn = document.getElementById('btn-day-filter');
+  onTap(dayFilterBtn, () => {
+    showDayOnly = !showDayOnly;
+    dayFilterBtn.textContent = showDayOnly ? '📅 전체 보기' : '📅 오늘만 보기';
+    dayFilterBtn.classList.toggle('active-filter', showDayOnly);
+    renderMap();
+  });
+}
+
+// ========================
+// 초기화
+// ========================
+loadData();
+initStaticEvents();
+renderAll();
+</script>
+
+
+</body></html>
